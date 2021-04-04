@@ -27,25 +27,23 @@ namespace Printservice
                 {
                     Sessions.Broadcast(PrinterList());
                 }
-                else
+                else if (clientRequest.RequestType.ToLower() == "pdf")
                 {
 
                     var fileName = Guid.NewGuid() + ".pdf";
                     clientRequest.pdfContent = clientRequest.pdfContent.Replace("data:application/pdf;base64,", "").Trim();
                     byte[] bytes = Convert.FromBase64String(clientRequest.pdfContent);
                     System.IO.File.WriteAllBytes(fileName, bytes);
-                   
+
                     var path = fileName;
-                    using (var document = PdfDocument.Load(fileName,"kamal"))
+                    using (var document = PdfDocument.Load(fileName))
                     {
-                        
                         var pagesize = document.PageSizes;
                         Size size = pagesize[0].ToSize();
                         Console.WriteLine(size.Width.ToString());
                         Console.WriteLine(size.Height.ToString());
                         using (var printDocument = document.CreatePrintDocument())
                         {
-                            
                             PaperSize sizeofpaper = new PaperSize("custom", size.Width, size.Height);
                             sizeofpaper.RawKind = (int)PaperKind.Custom;
                             printDocument.DefaultPageSettings.PaperSize = sizeofpaper;
@@ -54,13 +52,15 @@ namespace Printservice
                             printDocument.PrinterSettings.PrintFileName = "file.pdf";
                             printDocument.PrintController = new StandardPrintController();
                             printDocument.Print();
-                            
-
-                        }  
+                        }
                     }
-                    
+
                     Sessions.Broadcast("Successfully Printed to : " + clientRequest.PrinterName);
                     System.IO.File.Delete(path);
+                }
+                else
+                {
+                    Console.WriteLine("invalid request type");
                 }
             }
             else
